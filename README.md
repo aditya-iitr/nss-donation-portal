@@ -1,6 +1,6 @@
 # NSS IIT Roorkee - Donation Portal
 
-**Live Demo:** [https://nss-donation-portal-five.vercel.app/](https://nss-donation-portal-five.vercel.app/)
+**Live Demo:** [https://nss-donation-portal-five.vercel.app/](https://nss-donation-portal-project.vercel.app/)
 
 A full-stack web application designed to facilitate, manage, and track donations for the National Service Scheme (NSS) at IIT Roorkee. The portal provides a seamless experience for donors to contribute and track their history, while offering administrators powerful tools to monitor transactions and manage team members.
 
