@@ -1,22 +1,21 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true); // Toggle between Login and Register
+  const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
-  // Handle Input Change
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Determine Role based on Email Domain
   const getRole = (email) => {
-    if (!email) return "user"; // Default to user if empty
+    if (!email) return "user";
     return email.endsWith("iitr.ac.in") ? "admin" : "user";
   };
 
@@ -24,9 +23,7 @@ export default function AuthPage() {
     e.preventDefault();
     setLoading(true);
     
-    // 1. Detect Role
     const role = getRole(formData.email);
-    console.log(`Attempting to ${isLogin ? "Login" : "Register"} as ${role}`);
 
     try {
       const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
@@ -40,9 +37,21 @@ export default function AuthPage() {
       const data = await res.json();
 
       if (res.ok) {
-        // Redirect based on role
-        if (role === "admin") router.push("/admin/dashboard");
-        else router.push("/user/dashboard");
+        
+        if (!data.user || !data.user._id) {
+            alert("Login successful but User ID is missing. Please check the backend.");
+            return;
+        }
+
+        const userToSave = data.user;
+        
+        localStorage.setItem("user", JSON.stringify(userToSave));
+
+        if (userToSave.role === "admin") {
+            window.location.href = "/admin/dashboard";
+        } else {
+            window.location.href = "/user/dashboard";
+        }
       } else {
         alert(data.message || "Authentication failed!");
       }
@@ -56,85 +65,79 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-      
-      {/* Optional: Add IIT Roorkee / NSS Logo here if you have one in public folder */}
-      {/* <Image src="/nss-logo.png" alt="NSS Logo" width={80} height={80} className="mb-4" /> */}
-
       <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md border border-gray-200">
         
         {/* Header */}
         <h2 className="text-2xl font-bold text-center text-blue-900 mb-2">
           {isLogin ? "Welcome Back" : "Join NSS Portal"}
         </h2>
-        <p className="text-center text-gray-500 mb-6 text-sm">
+        <p className="text-center text-gray-600 mb-6 text-sm font-medium">
           {isLogin ? "Sign in to manage donations" : "Register to start donating"}
         </p>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          
-          {/* Name Field (Only for Register) */}
+        <form onSubmit={handleSubmit} className="space-y-5">
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium text-gray-700">Full Name</label>
-              <input
-                name="name"
-                type="text"
-                required
-                className="w-full mt-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-black"
-                onChange={handleChange}
+              <label className="block text-sm font-bold text-gray-900">Full Name</label>
+              <input 
+                name="name" 
+                type="text" 
+                required 
+                className="w-full mt-1 p-2 border border-gray-300 rounded-md outline-none focus:ring-2 focus:ring-blue-500 text-gray-900" 
+                onChange={handleChange} 
               />
             </div>
           )}
 
-          {/* Email Field */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Email Address</label>
-            <input
-              name="email"
-              type="email"
-              required
-              placeholder="user@gmail.com or admin@iitr.ac.in"
-              className="w-full mt-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-black"
-              onChange={handleChange}
+            <label className="block text-sm font-bold text-gray-900">Email Address</label>
+            <input 
+                name="email" 
+                type="email" 
+                required 
+                placeholder="user@gmail.com or admin@iitr.ac.in"
+                className="w-full mt-1 p-2 border border-gray-300 rounded-md outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-400" 
+                onChange={handleChange} 
             />
-            {/* Helper Text for Role Detection */}
-            {!isLogin && formData.email && (
-              <p className="text-xs mt-1 text-gray-500">
-                Detected Role: <span className="font-bold text-blue-600 uppercase">{getRole(formData.email)}</span>
-              </p>
+            {formData.email && (
+                <p className="text-xs text-gray-600 mt-1 font-medium">
+                    Detected Role: <span className="font-bold text-blue-700 uppercase">{getRole(formData.email)}</span>
+                </p>
             )}
           </div>
 
-          {/* Password Field */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">Password</label>
-            <input
-              name="password"
-              type="password"
-              required
-              className="w-full mt-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-black"
-              onChange={handleChange}
-            />
+            <label className="block text-sm font-bold text-gray-900">Password</label>
+            <div className="relative mt-1">
+                <input
+                  name="password"
+                  type={showPassword ? "text" : "password"} 
+                  required
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none pr-10 text-gray-900" 
+                  onChange={handleChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-800"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+            </div>
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-700 text-white py-2 rounded-md hover:bg-blue-800 transition font-semibold"
-          >
+          <button type="submit" disabled={loading} className="w-full bg-blue-700 text-white py-2.5 rounded-md font-bold hover:bg-blue-800 transition shadow-sm">
             {loading ? "Processing..." : isLogin ? "Login" : "Register"}
           </button>
         </form>
 
-        {/* Toggle Login/Register */}
-        <div className="mt-6 text-center border-t pt-4">
-          <p className="text-sm text-gray-600">
+        <div className="mt-6 text-center border-t border-gray-100 pt-4">
+          <p className="text-sm text-gray-700">
             {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
             <button
               onClick={() => setIsLogin(!isLogin)}
-              className="text-blue-600 font-semibold hover:underline"
+              className="text-blue-700 font-bold hover:underline ml-1"
             >
               {isLogin ? "Create Account" : "Log In"}
             </button>

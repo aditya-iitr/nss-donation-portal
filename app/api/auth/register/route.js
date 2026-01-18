@@ -1,35 +1,39 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
+import bcrypt from "bcryptjs";
 
 export async function POST(req) {
   try {
     const { name, email, password, role } = await req.json();
-
-    // 1. Connect to Database
     await connectDB();
 
-    // 2. Check if user already exists
+    // 1. Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return NextResponse.json({ message: "User already exists" }, { status: 400 });
     }
 
-    // 3. Encrypt the password (Security)
+    // 2. Hash Password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 4. Create the User in MongoDB
-    await User.create({
+    // 3. Create User (We name this variable 'newUser')
+    const newUser = await User.create({
       name,
       email,
       password: hashedPassword,
-      role, // "admin" or "user"
+      role: role || "user",
     });
 
-    return NextResponse.json({ message: "User registered successfully" }, { status: 201 });
+    // 4. Return Success
+    // We return 'newUser', which is now definitely defined above
+    return NextResponse.json({ 
+        message: "User registered", 
+        user: newUser 
+    }, { status: 201 });
+
   } catch (error) {
     console.error("Registration Error:", error);
-    return NextResponse.json({ message: "Error registering user" }, { status: 500 });
+    return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }
